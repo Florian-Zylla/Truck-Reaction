@@ -4,10 +4,68 @@ import time
 
 import ecal.core.core as ecal_core
 from ecal.core.subscriber import ProtoSubscriber
+from ecal.core.publisher import ProtoPublisher
 
 from PB.SensorNearData import Brake_pb2
 from PB.SensorNearData import VehicleDynamics_pb2
 from PB.HMI import HMICanKeyboard_pb2
+from PB import W3Lightbar_pb2
+
+
+def lightbar_left_time(sleep_time_ms: int):
+    pub = ProtoPublisher("W3LightbarRequestPb", W3Lightbar_pb2.W3LightbarRequest)
+    pb_msg = W3Lightbar_pb2.W3LightbarRequest()
+    pb_msg.Clear()
+    pb_msg.alley_light_left = True
+    pb_msg.turn_signal_left = True
+    pub.send(pb_msg)
+    time.sleep(sleep_time_ms * 1000)
+    lightbar_off()
+
+def lightbar_right_time(sleep_time_ms: int):
+    pub = ProtoPublisher("W3LightbarRequestPb", W3Lightbar_pb2.W3LightbarRequest)
+    pb_msg = W3Lightbar_pb2.W3LightbarRequest()
+    pb_msg.Clear()
+    pb_msg.alley_light_right = True
+    pb_msg.turn_signal_right = True
+    pub.send(pb_msg)
+    time.sleep(sleep_time_ms * 1000)
+    lightbar_off()
+
+
+def lightbar_left():
+    pub = ProtoPublisher("W3LightbarRequestPb", W3Lightbar_pb2.W3LightbarRequest)
+    pb_msg = W3Lightbar_pb2.W3LightbarRequest()
+    pb_msg.Clear()
+    pb_msg.alley_light_left = True
+    pb_msg.turn_signal_left = True
+    pub.send(pb_msg)
+def lightbar_right():
+    pub = ProtoPublisher("W3LightbarRequestPb", W3Lightbar_pb2.W3LightbarRequest)
+    pb_msg = W3Lightbar_pb2.W3LightbarRequest()
+    pb_msg.Clear()
+    pb_msg.alley_light_right = True
+    pb_msg.turn_signal_right = True
+    pub.send(pb_msg)
+
+
+def lightbar_front(sleep_time_ms: int):
+    pub = ProtoPublisher("W3LightbarRequestPb", W3Lightbar_pb2.W3LightbarRequest)
+    pb_msg = W3Lightbar_pb2.W3LightbarRequest()
+    pb_msg.Clear()
+    pb_msg.take_down = True
+    pb_msg.front_colour_2 = True
+    pub.send(pb_msg)
+    time.sleep(sleep_time_ms * 1000)
+    lightbar_off()
+
+def lightbar_off():
+    pub = ProtoPublisher("W3LightbarRequestPb", W3Lightbar_pb2.W3LightbarRequest)
+    pb_msg = W3Lightbar_pb2.W3LightbarRequest()
+    pb_msg.Clear()
+    pub.send(pb_msg)
+
+
 
 def reaction_test_brake(timeout: int):
     print("Press Brake!")
@@ -27,6 +85,7 @@ def reaction_test_brake(timeout: int):
     return score
 
 def reaction_left_steering(timeout: int):
+    lightbar_left()
     print("Steer left!")
     sub = ProtoSubscriber("VehicleDynamicsInPb", VehicleDynamics_pb2.VehicleDynamics)
 
@@ -41,10 +100,12 @@ def reaction_left_steering(timeout: int):
             end_time = ecal_core.getmicroseconds()[1]
             break
     score = end_time - start_time
+    lightbar_off()
     return score
 
 
 def reaction_right_steering(timeout: int):
+    lightbar_right()
     print("Steer right!")
     sub = ProtoSubscriber("VehicleDynamicsInPb", VehicleDynamics_pb2.VehicleDynamics)
 
@@ -59,6 +120,7 @@ def reaction_right_steering(timeout: int):
             end_time = ecal_core.getmicroseconds()[1]
             break
     score = end_time - start_time
+    lightbar_off()
     return score
 
 def reaction_button(index:int , timeout: int):
@@ -127,11 +189,15 @@ total_score = 0
 max_timeout = 50 # seconds
 max_wait = 10 # seconds
 min_wait = 2 # seconds
+
+print("Starting game in 5 seconds!")
+time.sleep(5)
 while True:
     print("Total Score: {}\n\n".format(total_score))
     test = random.randint(0, 6)
     wait = random.random() * max_wait
-    wait = max(min_wait, wait)
+    # wait = max(min_wait, wait)
+
     time.sleep(wait)
 
     score = max_timeout
@@ -150,4 +216,12 @@ while True:
         test_name = "Button test!"
         score = ms_to_score(reaction_button(button_index, max_timeout))
     print("{} - Score: {}".format(test_name, score))
+    lightbar_front(500);
+    time.sleep(0.5)
+    lightbar_front(500);
+    time.sleep(0.5)
+    lightbar_front(500);
+    time.sleep(0.5)
+    lightbar_front(500);
+    time.sleep(0.5)
     total_score += score
